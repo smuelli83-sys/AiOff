@@ -1,51 +1,46 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
+
+from offlineai_core.types import ProviderType
 
 
 @dataclass(slots=True)
 class Provider:
 
     id: str
-
     name: str
-
     version: str
 
-    capabilities: List[str] = field(default_factory=list)
+    type: ProviderType = ProviderType.CORE
 
-    dependencies: List[str] = field(default_factory=list)
+    capabilities: list[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
 
     healthy: bool = False
-
     enabled: bool = True
 
 
 class Registry:
 
-    def __init__(self):
+    def __init__(self) -> None:
+        self._providers: dict[str, Provider] = {}
 
-        self.providers: Dict[str, Provider] = {}
+    def register(self, provider: Provider) -> None:
+        self._providers[provider.id] = provider
 
-    def register(self, provider: Provider):
-
-        self.providers[provider.id] = provider
-
-    def unregister(self, provider_id: str):
-
-        self.providers.pop(provider_id, None)
+    def unregister(self, provider_id: str) -> None:
+        self._providers.pop(provider_id, None)
 
     def exists(self, provider_id: str) -> bool:
+        return provider_id in self._providers
 
-        return provider_id in self.providers
+    def get(self, provider_id: str) -> Provider | None:
+        return self._providers.get(provider_id)
 
-    def get(self, provider_id: str):
+    def list(self) -> list[Provider]:
+        return sorted(
+            self._providers.values(),
+            key=lambda provider: provider.name,
+        )
 
-        return self.providers.get(provider_id)
-
-    def list(self):
-
-        return list(self.providers.values())
-
-    def health(self):
-
-        return all(p.healthy for p in self.providers.values())
+    def healthy(self) -> bool:
+        return all(provider.healthy for provider in self._providers.values())
