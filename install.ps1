@@ -29,6 +29,25 @@ if (!(Test-Path $InstallDir)) {
 }
 Copy-Item -Path "$UsbPayload\*" -Destination $InstallDir -Recurse -Force
 
+Write-Host "[*] Installiere RAG-Abhängigkeiten (Word/Excel) offline..." -ForegroundColor Cyan
+
+$VenvPython = Join-Path $InstallDir "providers\open_webui\venv\Scripts\python.exe"
+$WheelsDir = Join-Path $InstallDir "dependencies\python_wheels"
+
+if (Test-Path $WheelsDir) {
+    # "--no-index" verhindert, dass pip versucht, ins Internet zu gehen
+    # "--find-links" zwingt pip, nur unsere USB-Stick-Dateien zu nutzen
+    $InstallArgs = "-m", "pip", "install", "--no-index", "--find-links=$WheelsDir", "python-docx", "openpyxl", "pandas"
+    
+    $Process = Start-Process -FilePath $VenvPython -ArgumentList $InstallArgs -Wait -NoNewWindow -PassThru
+    
+    if ($Process.ExitCode -eq 0) {
+        Write-Host "  -> RAG-Pakete erfolgreich installiert." -ForegroundColor Green
+    } else {
+        Write-Host "  -> Fehler bei der Installation der RAG-Pakete." -ForegroundColor Red
+    }
+}
+
 # 4. Windows-Dienst registrieren
 Write-Host "[*] Registriere Windows-Dienst..."
 $WinSWExe = Join-Path $InstallDir "winsw.exe"
