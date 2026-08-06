@@ -17,3 +17,9 @@ class Kernel:
         self.context.logger.info("Kernel Ready")
 
 self.context.logger.info("Registry initialized")
+
+self.context.logger.info("Starting providers")
+
+self.context.provider_manager.startup()
+
+self.context.logger.info("Providers started")
