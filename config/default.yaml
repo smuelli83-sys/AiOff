@@ -4,6 +4,9 @@ system:
   log_level: "INFO"
   base_dir: "C:\\OfflineAI"
   audit_logging: true
+  
+# Ergänzung in der build.yaml
+build_target: "payload"
 
 kernel:
   strict_mode: true # Bricht ab, wenn ein kritischer Provider fehlt
@@ -31,3 +34,9 @@ providers:
     enabled: true
     host: "127.0.0.1"
     port: 8000
+  python_packages:
+    target_path: "dependencies/python_wheels"
+    packages:
+      - "python-docx"  # Für Word-Dokumente
+      - "openpyxl"     # Für moderne Excel-Dateien (.xlsx)
+      - "pandas"       # Hilft oft beim Parsen komplexer Tabellen
