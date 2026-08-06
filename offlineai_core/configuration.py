@@ -1,55 +1,40 @@
-from pathlib import Path
-from typing import Any
-
 import yaml
-from pydantic import BaseModel, Field
+import logging
+from pathlib import Path
+from dataclasses import dataclass, field
+from typing import Dict, Any
 
+logger = logging.getLogger(__name__)
 
-class Paths(BaseModel):
-    workspace: Path = Path("./workspace")
-    releases: Path = Path("./releases")
-    packages: Path = Path("./packages")
-    models: Path = Path("./models")
-    logs: Path = Path("./logs")
+class ConfigurationError(Exception):
+    """Wird geworfen, wenn die Konfiguration fehlerhaft oder unvollständig ist."""
+    pass
 
-
-class Security(BaseModel):
-    airgap: bool = True
-    verify_checksums: bool = True
-    telemetry: bool = False
-
-
-class Build(BaseModel):
-    create_iso: bool = False
-    create_usb: bool = True
-    verify_after_build: bool = True
-
-
-class Configuration(BaseModel):
-    project_name: str = "OfflineAI Enterprise"
-    version: str = "0.1.0-alpha"
-
-    paths: Paths = Field(default_factory=Paths)
-    security: Security = Field(default_factory=Security)
-    build: Build = Field(default_factory=Build)
+@dataclass
+class Configuration:
+    system: Dict[str, Any] = field(default_factory=dict)
+    kernel: Dict[str, Any] = field(default_factory=dict)
+    providers: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def load(cls, file: Path) -> "Configuration":
-        if not file.exists():
-            return cls()
+    def load_from_yaml(cls, file_path: str | Path) -> 'Configuration':
+        path = Path(file_path)
+        if not path.exists():
+            raise ConfigurationError(f"Konfigurationsdatei nicht gefunden: {path}")
 
-        with file.open("r", encoding="utf-8") as f:
-            data: dict[str, Any] = yaml.safe_load(f) or {}
-
-        return cls.model_validate(data)
-
-    def save(self, file: Path) -> None:
-        file.parent.mkdir(parents=True, exist_ok=True)
-
-        with file.open("w", encoding="utf-8") as f:
-            yaml.safe_dump(
-                self.model_dump(mode="python"),
-                f,
-                sort_keys=False,
-                allow_unicode=True,
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f) or {}
+                
+            logger.info(f"Konfiguration erfolgreich geladen von: {path}")
+            return cls(
+                system=data.get('system', {}),
+                kernel=data.get('kernel', {}),
+                providers=data.get('providers', {})
             )
+        except yaml.YAMLError as e:
+            raise ConfigurationError(f"Fehler beim Parsen der YAML-Datei: {e}")
+
+    def get_provider_config(self, provider_name: str) -> Dict[str, Any]:
+        """Holt die Konfiguration für einen spezifischen Provider sicher ab."""
+        return self.providers.get(provider_name, {})
