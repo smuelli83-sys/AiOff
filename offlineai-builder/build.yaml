@@ -15,3 +15,15 @@ downloads:
   winsw:
     url: "https://github.com/winsw/winsw/releases/download/v3.0.0-alpha.11/WinSW-x64.exe"
     target_path: "winsw.exe"
+
+
+
+  # Das Embedding-Modell (übersetzt Text in Vektoren)
+  embedding_model:
+    url: "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx"
+    target_path: "providers/rag/models/all-MiniLM-L6-v2/model.onnx"
+    
+  # Die Vektordatenbank (ChromaDB als Standalone-Binary oder Wheel)
+  chromadb:
+    url: "https://github.com/chroma-core/chroma/releases/download/0.4.22/chroma-windows-amd64.exe" 
+    target_path: "providers/rag/chroma.exe"
