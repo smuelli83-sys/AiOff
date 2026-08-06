@@ -1,22 +1,25 @@
-from datetime import datetime
+import logging
 
 
 class Logger:
 
-    def info(self, message: str):
+    def __init__(self) -> None:
 
-        print(
-            f"[{datetime.now().strftime('%H:%M:%S')}] INFO    {message}"
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)-8s %(message)s",
         )
 
-    def warning(self, message: str):
+        self._logger = logging.getLogger("OfflineAI")
 
-        print(
-            f"[{datetime.now().strftime('%H:%M:%S')}] WARNING {message}"
-        )
+    def info(self, message: str) -> None:
+        self._logger.info(message)
 
-    def error(self, message: str):
+    def warning(self, message: str) -> None:
+        self._logger.warning(message)
 
-        print(
-            f"[{datetime.now().strftime('%H:%M:%S')}] ERROR   {message}"
-        )
+    def error(self, message: str) -> None:
+        self._logger.error(message)
+
+    def debug(self, message: str) -> None:
+        self._logger.debug(message)
