@@ -8,3 +8,6 @@ class ApplicationContext:
         self.logger = Logger()
         self.configuration = Configuration()
         self.registry = Registry()
+
+from offlineai_core.provider_manager import ProviderManager
+self.provider_manager = ProviderManager()
