@@ -1,121 +1,99 @@
-# offlineai-builder/build.py
 import os
-import yaml
 import hashlib
 import urllib.request
-from pathlib import Path
+import subprocess
+import sys
+import yaml
 
 class OfflineBuilder:
-    def __init__(self, config_path: str):
-        with open(config_path, 'r', encoding='utf-8') as f:
+    def __init__(self, yaml_path):
+        with open(yaml_path, "r", encoding="utf-8") as f:
             self.config = yaml.safe_load(f)
-        
-        self.payload_dir = Path(self.config.get("build_target", "payload"))
-        self.manifest_path = Path("manifest.sha256")
-        self.file_hashes = {}
-    
-    def _download_python_packages(self):
-        print("\n[*] Lade Python-Abhängigkeiten für RAG (.docx, .xlsx) herunter...")
-        pkg_config = self.config.get("python_packages")
-        if not pkg_config:
-            return
+        self.payload_dir = "payload"
+        os.makedirs(self.payload_dir, exist_ok=True)
+        self.manifest = {}
 
-        target_dir = self.payload_dir / pkg_config["target_path"]
-        target_dir.mkdir(parents=True, exist_ok=True)
-        
-        packages = pkg_config.get("packages", [])
-        if not packages:
+    def download_file(self, url, target_path):
+        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+        if os.path.exists(target_path) and os.path.getsize(target_path) > 0:
+            print(f"  [CACHE] Überspringe (bereits vorhanden): {target_path}")
             return
+        print(f"  -> Lade herunter: {target_path}")
+        urllib.request.urlretrieve(url, target_path)
 
-        # Führt pip aus, um die Pakete als Offline-Ressourcen zu speichern
-        import subprocess
-        
-        command = [
-            "pip", "download", 
-            "--dest", str(target_dir)
-        ] + packages
-        
-        try:
-            print(f"  -> Führe pip download aus für: {', '.join(packages)}")
-            subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            print("  -> Pakete erfolgreich für den Offline-Transport verpackt.")
-        except subprocess.CalledProcessError as e:
-            print(f"     FEHLER beim Download der Python-Pakete: {e.stderr.decode('utf-8')}")
-            
+    def calculate_sha256(self, file_path):
+        sha256_hash = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for byte_block in iter(lambda: f.read(65536), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+
     def run(self):
-        print("=== OfflineAI Enterprise Builder ===")
-        self.payload_dir.mkdir(parents=True, exist_ok=True)
-        
-        # 1. Downloads ausführen
-        self._process_downloads()
-        
-        # 2. Manifest (SHA-256) generieren
-        self._generate_manifest()
-        
-        print("\n=== Build erfolgreich abgeschlossen! ===")
-        print(f"Kopiere den Ordner '{self.payload_dir}' und das 'manifest.sha256' auf den USB-Stick.")
-
-    def _process_downloads(self):
-        print("\n[*] Starte Downloads...")
+        print("[*] Starte Offline-Builder...")
         downloads = self.config.get("downloads", {})
-        
-        # Ollama Binary
+
+        # 1. Ollama
         if "ollama" in downloads:
-            self._download_file(downloads["ollama"]["url"], downloads["ollama"]["target_path"])
-            
-        # WinSW Wrapper
+            item = downloads["ollama"]
+            self.download_file(item["url"], os.path.join(self.payload_dir, item["target_path"]))
+            self.manifest[item["target_path"]] = self.calculate_sha256(os.path.join(self.payload_dir, item["target_path"]))
+
+        # 2. WinSW
         if "winsw" in downloads:
-            self._download_file(downloads["winsw"]["url"], downloads["winsw"]["target_path"])
+            item = downloads["winsw"]
+            self.download_file(item["url"], os.path.join(self.payload_dir, item["target_path"]))
+            self.manifest[item["target_path"]] = self.calculate_sha256(os.path.join(self.payload_dir, item["target_path"]))
+
+        # 3. LLM Modelle
+        for model in downloads.get("models", []):
+            self.download_file(model["url"], os.path.join(self.payload_dir, model["target_path"]))
+            self.manifest[model["target_path"]] = self.calculate_sha256(os.path.join(self.payload_dir, model["target_path"]))
+
+        # 4. Embedding & Reranker
+        for key in ["embedding_model", "reranker_model"]:
+            if key in downloads:
+                item = downloads[key]
+                self.download_file(item["url"], os.path.join(self.payload_dir, item["target_path"]))
+                self.manifest[item["target_path"]] = self.calculate_sha256(os.path.join(self.payload_dir, item["target_path"]))
+
+        # 5. Python Wheels (ChromaDB, Open WebUI etc.) für Python 3.11 cachen
+        packages = downloads.get("pip_packages", [])
+        if packages:
+            wheel_dir = os.path.join(self.payload_dir, "providers/rag/wheels")
+            os.makedirs(wheel_dir, exist_ok=True)
+            print("  -> Lade Python-Pakete für Python 3.11 herunter...")
+            subprocess.run([
+                sys.executable, "-m", "pip", "download", 
+                *packages, 
+                "-d", wheel_dir, 
+                "--no-deps",
+                "--python-version", "3.11",
+                "--platform", "win_amd64",
+                "--abi", "cp311"
+            ], check=True)
+
+        # 6. Open WebUI Docker Image als Tarball exportieren
+        webui = downloads.get("webui_image")
+        if webui:
+            img_name = webui["image_name"]
+            tar_rel_path = webui["target_path"]
+            tar_abs_path = os.path.join(self.payload_dir, tar_rel_path)
+            os.makedirs(os.path.dirname(tar_abs_path), exist_ok=True)
             
-        # KI-Modelle
-        if "models" in downloads:
-            for model in downloads["models"]:
-                self._download_file(model["url"], model["target_path"])
+            print(f"  -> Ziehe Open WebUI Docker-Image ({img_name})...")
+            subprocess.run(["docker", "pull", img_name], check=True)
+            
+            print(f"  -> Exportiere Docker-Image nach {tar_abs_path}...")
+            subprocess.run(["docker", "save", img_name, "-o", tar_abs_path], check=True)
+            
+            self.manifest[tar_rel_path] = self.calculate_sha256(tar_abs_path)
 
-    def _download_file(self, url: str, relative_target: str):
-        target_path = self.payload_dir / relative_target
-        target_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        if target_path.exists():
-            print(f"  -> Überspringe (bereits vorhanden): {relative_target}")
-            return
+        # Manifest schreiben
+        with open("manifest.sha256", "w", encoding="utf-8") as f:
+            for path, checksum in self.manifest.items():
+                f.write(f"{checksum}  {path}\n")
 
-        print(f"  -> Lade herunter: {relative_target}")
-        try:
-            # Lade die Datei in Chunks herunter (wichtig für große KI-Modelle)
-            req = urllib.request.urlopen(url)
-            with open(target_path, 'wb') as f:
-                while True:
-                    chunk = req.read(8192)
-                    if not chunk:
-                        break
-                    f.write(chunk)
-        except Exception as e:
-            print(f"     FEHLER beim Download von {url}: {e}")
-
-    def _generate_manifest(self):
-        print("\n[*] Generiere SHA-256 Integritäts-Manifest...")
-        
-        # Geht durch alle Dateien im Payload-Ordner
-        for root, _, files in os.walk(self.payload_dir):
-            for file in files:
-                file_path = Path(root) / file
-                rel_path = file_path.relative_to(self.payload_dir)
-                
-                # Berechne Hash
-                sha256_hash = hashlib.sha256()
-                with open(file_path, "rb") as f:
-                    for byte_block in iter(lambda: f.read(4096), b""):
-                        sha256_hash.update(byte_block)
-                
-                self.file_hashes[str(rel_path)] = sha256_hash.hexdigest()
-        
-        # Schreibe Manifest-Datei
-        with open(self.manifest_path, 'w', encoding='utf-8') as f:
-            for path, file_hash in self.file_hashes.items():
-                f.write(f"{file_hash} *{path}\n")
-                
-        print(f"  -> {len(self.file_hashes)} Dateien in {self.manifest_path} signiert.")
+        print("\n[*] Build komplett! Alle Dateien (inkl. Open WebUI Image) liegen im 'payload'-Ordner.")
 
 if __name__ == "__main__":
     builder = OfflineBuilder("build.yaml")

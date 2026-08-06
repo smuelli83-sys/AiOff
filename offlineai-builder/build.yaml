@@ -8,34 +8,38 @@ downloads:
     target_path: "winsw.exe"
 
   models:
-# 1. Mistral 7B v0.3 (Blitzschnelles VRAM-Leichtgewicht, 100% in der RTX A1000)
     - url: "https://huggingface.co/bartowski/Mistral-7B-Instruct-v0.3-GGUF/resolve/main/Mistral-7B-Instruct-v0.3-Q4_K_M.gguf"
       target_path: "providers/ollama/models/mistral-fast.gguf"
 
-    # 2. Microsoft Phi-4 (Der überragende Logik- und Reasoning-Spezialist im Hybrid-Modus)
     - url: "https://huggingface.co/bartowski/microsoft_Phi-4-reasoning-GGUF/resolve/main/microsoft_Phi-4-reasoning-Q4_K_M.gguf"
       target_path: "providers/ollama/models/phi-4.gguf"
 
-    # 3. Qwen 3.6 27B (Der Allrounder im Hybrid-Modus)
     - url: "https://huggingface.co/unsloth/Qwen3.6-27B-GGUF/resolve/main/Qwen3.6-27B-Q4_K_M.gguf"
       target_path: "providers/ollama/models/qwen3.6-27b.gguf"
 
-    # 4. Qwen 3.6 35B-A3B (MoE Hybrid-Modus für maximale RAG-Tiefe)
     - url: "https://huggingface.co/unsloth/Qwen3.6-35B-A3B-GGUF/resolve/main/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
       target_path: "providers/ollama/models/qwen3.6-35b.gguf"
 
-    # 5. DeepSeek-Coder-V2-Lite-Instruct (Der Coding-Spezialist)
     - url: "https://huggingface.co/bartowski/DeepSeek-Coder-V2-Lite-Instruct-GGUF/resolve/main/DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M.gguf"
       target_path: "providers/ollama/models/deepseek-coder.gguf"
-      
-    # 6. Gemma 2 9B (Extrem sprachstark und präzise im Instruktions-Following)
+
     - url: "https://huggingface.co/bartowski/gemma-2-9b-it-GGUF/resolve/main/gemma-2-9b-it-Q4_K_M.gguf"
       target_path: "providers/ollama/models/gemma2-9b.gguf"
 
   embedding_model:
-    url: "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx"
-    target_path: "providers/rag/models/all-MiniLM-L6-v2/model.onnx"
-    
-  chromadb:
-    url: "https://github.com/chroma-core/chroma/releases/download/0.4.22/chroma-windows-amd64.exe"
-    target_path: "providers/rag/chroma.exe"
+    url: "https://huggingface.co/philipchung/bge-m3-onnx/resolve/main/model.onnx"
+    target_path: "providers/rag/models/bge-m3/model.onnx"
+
+  reranker_model:
+    url: "https://huggingface.co/BAAI/bge-reranker-large/resolve/main/pytorch_model.bin"
+    target_path: "providers/rag/models/bge-reranker-large/pytorch_model.bin"
+
+  # Alle Python-Pakete (inklusive Open WebUI und ChromaDB) für den Offline-Cache
+  pip_packages:
+    - "open-webui"
+    - "chromadb"
+    - "sentence-transformers"
+    - "onnxruntime-gpu"
+    - "transformers"
+    - "tokenizers"
+    - "torch"
