@@ -13,10 +13,13 @@ kernel:
 
 
 providers:
+
+
   ollama:
     enabled: true
-    host: "127.0.0.1" # Bleibt strikt lokal!
+    host: "127.0.0.1"
     port: 11434
+    default_model: "qwen3.6-27b"
 
   open_webui:
     enabled: true
