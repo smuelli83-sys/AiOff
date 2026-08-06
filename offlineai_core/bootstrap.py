@@ -40,3 +40,31 @@ def boot_system(config_path: str | Path) -> Kernel:
     except Exception as e:
         logger.critical(f"Unerwarteter kritischer Fehler beim Booten: {e}", exc_info=True)
         sys.exit(1)
+
+if __name__ == "__main__":
+    import argparse
+    import signal
+    
+    parser = argparse.ArgumentParser(description="OfflineAI Kernel Bootstrap")
+    parser.add_argument("--config", type=str, default="config/default.yaml", help="Pfad zur YAML-Config")
+    args = parser.parse_args()
+
+    # Kernel starten
+    kernel = boot_system(args.config)
+    
+    # Graceful Shutdown für den Windows Service Control Manager abfangen
+    def handle_shutdown(signum, frame):
+        logging.getLogger("Bootstrap").info("Shutdown-Signal vom Betriebssystem empfangen.")
+        kernel.stop()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, handle_shutdown)
+    signal.signal(signal.SIGTERM, handle_shutdown)
+    
+    # Den Haupt-Thread am Leben halten, während die Provider-Subprozesse laufen
+    import time
+    try:
+        while kernel._is_running:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        handle_shutdown(None, None)
