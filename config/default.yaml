@@ -1,0 +1,19 @@
+project_name: OfflineAI Enterprise
+version: 0.1.0-alpha
+
+paths:
+  workspace: ./workspace
+  releases: ./releases
+  packages: ./packages
+  models: ./models
+  logs: ./logs
+
+security:
+  airgap: true
+  verify_checksums: true
+  telemetry: false
+
+build:
+  create_iso: false
+  create_usb: true
+  verify_after_build: true
