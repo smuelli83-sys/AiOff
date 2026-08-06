@@ -1,19 +1,27 @@
-project_name: OfflineAI Enterprise
-version: 0.1.0-alpha
+# config/default.yaml
+system:
+  environment: "production" # oder "development"
+  log_level: "INFO"
+  base_dir: "C:\\OfflineAI"
+  audit_logging: true
 
-paths:
-  workspace: ./workspace
-  releases: ./releases
-  packages: ./packages
-  models: ./models
-  logs: ./logs
+kernel:
+  strict_mode: true # Bricht ab, wenn ein kritischer Provider fehlt
 
-security:
-  airgap: true
-  verify_checksums: true
-  telemetry: false
-
-build:
-  create_iso: false
-  create_usb: true
-  verify_after_build: true
+providers:
+  # Provider 1: Lokales LLM
+  ollama:
+    enabled: true
+    version_required: "0.1.20"
+    host: "127.0.0.1"
+    port: 11434
+    
+  # Provider 2: Active Directory Anbindung
+  active_directory:
+    enabled: false # Kann per USB-Update später aktiviert werden
+    domain: "offline.local"
+    
+  # Provider 3: Weboberfläche
+  open_webui:
+    enabled: true
+    port: 8080
