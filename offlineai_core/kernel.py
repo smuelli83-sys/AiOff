@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from offlineai_core.configuration import Configuration
 from offlineai_core.context import ApplicationContext
 
 
@@ -10,16 +13,18 @@ class Kernel:
 
         self.context.logger.info("Starting OfflineAI Enterprise")
 
-        self.context.logger.info("Loading Configuration")
+        self.context.configuration = Configuration.load(
+            Path("config/default.yaml")
+        )
 
-        self.context.logger.info("Loading Registry")
+        self.context.logger.info("Configuration loaded")
 
-        self.context.logger.info("Kernel Ready")
+        self.context.logger.info("Registry initialized")
 
-self.context.logger.info("Registry initialized")
+        self.context.logger.info("Starting providers")
 
-self.context.logger.info("Starting providers")
+        self.context.provider_manager.startup()
 
-self.context.provider_manager.startup()
+        self.context.logger.info("Providers started")
 
-self.context.logger.info("Providers started")
+        self.context.logger.info("Kernel ready")
