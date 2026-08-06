@@ -1,0 +1,17 @@
+# offlineai-builder/build.yaml
+build_target: "payload"
+
+downloads:
+  ollama:
+    url: "https://ollama.com/download/ollama-windows-amd64.zip"
+    target_path: "providers/ollama/ollama.zip"
+    
+  # Beispiel für ein lokales KI-Modell (z.B. Llama 3 8B Instruct als GGUF)
+  models:
+    - url: "https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf"
+      target_path: "providers/ollama/models/llama3-8b-instruct.gguf"
+
+  # WinSW für die Windows-Dienst-Erstellung
+  winsw:
+    url: "https://github.com/winsw/winsw/releases/download/v3.0.0-alpha.11/WinSW-x64.exe"
+    target_path: "winsw.exe"
