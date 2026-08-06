@@ -8,20 +8,21 @@ system:
 kernel:
   strict_mode: true # Bricht ab, wenn ein kritischer Provider fehlt
 
+
 providers:
-  # Provider 1: Lokales LLM
   ollama:
     enabled: true
-    version_required: "0.1.20"
-    host: "127.0.0.1"
+    host: "127.0.0.1" # Bleibt strikt lokal!
     port: 11434
-    
-  # Provider 2: Active Directory Anbindung
-  active_directory:
-    enabled: false # Kann per USB-Update später aktiviert werden
-    domain: "offline.local"
-    
-  # Provider 3: Weboberfläche
+
   open_webui:
     enabled: true
+    host: "0.0.0.0"   # Macht das GUI im gesamten Unternehmensnetzwerk verfügbar
     port: 8080
+    active_directory:
+      enabled: true
+      server: "ldap://dein-dc01.domain.local"
+      base_dn: "DC=domain,DC=local"
+      bind_dn: "CN=OfflineAI_Service,OU=ServiceAccounts,DC=domain,DC=local"
+      bind_password: "sicheres_passwort" # Im produktiven System idealerweise verschlüsselt
+      user_search_base: "OU=Users,DC=domain,DC=local"
