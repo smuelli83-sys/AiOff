@@ -8,7 +8,7 @@ downloads:
     url: "https://github.com/winsw/winsw/releases/download/v3.0.0-alpha.11/WinSW-x64.exe"
     target_path: "winsw.exe"
 
-     models:
+  models:
     # 1. Qwen3 7B Instruct (VRAM-optimiert, 100% im VRAM der RTX A1000)
     - url: "https://huggingface.co/Ygz-08123/Qwen3-7B-Instruct-Q4_K_M-GGUF/resolve/main/qwen3-7b-instruct-q4_k_m.gguf"
       target_path: "providers/ollama/models/qwen3-fast.gguf"
