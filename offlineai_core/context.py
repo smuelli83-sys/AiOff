@@ -17,3 +17,7 @@ class ApplicationContext:
 
         self.logger = Logger()
         self.configuration = Configuration()
+
+from offlineai_core.registry import Registry
+
+self.registry = Registry()
