@@ -1,0 +1,18 @@
+<!-- C:\OfflineAI\offlineai-service.xml -->
+<service>
+  <id>OfflineAI</id>
+  <name>OfflineAI Enterprise Kernel</name>
+  <description>Zentraler Dienst für die lokale KI-Plattform (Ollama & WebUI).</description>
+  
+  <!-- Pfad zur portablen Python-Umgebung, die der Installer mitbringt -->
+  <executable>C:\OfflineAI\python\python.exe</executable>
+  
+  <!-- Startet unser Boot-Skript mit der YAML-Config -->
+  <arguments>-m offlineai_core.bootstrap --config C:\OfflineAI\config\default.yaml</arguments>
+  
+  <!-- Automatischer Neustart bei Fehlern nach 10 Sekunden -->
+  <onfailure action="restart" delay="10 sec"/>
+  
+  <!-- WinSW leitet alle unaufgefangenen Konsolenausgaben in rotierende Logs um -->
+  <log mode="roll"></log>
+</service>
