@@ -124,3 +124,14 @@ class OpenWebUIProvider(Provider):
                 return response.status == 200
         except Exception:
             return False
+
+# 4. Dokumenten-KI (RAG) Offline-Integration
+        # Zwingt WebUI, unsere zentrale ChromaDB zu nutzen anstatt eine eigene aufzubauen
+        env["CHROMA_API_IMPL"] = "rest"
+        env["CHROMA_SERVER_HOST"] = "127.0.0.1"
+        env["CHROMA_SERVER_HTTP_PORT"] = "8000"
+        
+        # Sagt dem System: Lade das Embedding-Modell strikt vom lokalen C:\-Laufwerk
+        # und versuche niemals, Hugging Face zu kontaktieren!
+        env["SENTENCE_TRANSFORMERS_HOME"] = str(self.provider_dir.parent / "rag" / "models")
+        env["RAG_EMBEDDING_MODEL"] = "all-MiniLM-L6-v2"
