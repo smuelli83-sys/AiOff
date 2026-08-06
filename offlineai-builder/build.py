@@ -13,7 +13,35 @@ class OfflineBuilder:
         self.payload_dir = Path(self.config.get("build_target", "payload"))
         self.manifest_path = Path("manifest.sha256")
         self.file_hashes = {}
+    
+    def _download_python_packages(self):
+        print("\n[*] Lade Python-Abhängigkeiten für RAG (.docx, .xlsx) herunter...")
+        pkg_config = self.config.get("python_packages")
+        if not pkg_config:
+            return
 
+        target_dir = self.payload_dir / pkg_config["target_path"]
+        target_dir.mkdir(parents=True, exist_ok=True)
+        
+        packages = pkg_config.get("packages", [])
+        if not packages:
+            return
+
+        # Führt pip aus, um die Pakete als Offline-Ressourcen zu speichern
+        import subprocess
+        
+        command = [
+            "pip", "download", 
+            "--dest", str(target_dir)
+        ] + packages
+        
+        try:
+            print(f"  -> Führe pip download aus für: {', '.join(packages)}")
+            subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print("  -> Pakete erfolgreich für den Offline-Transport verpackt.")
+        except subprocess.CalledProcessError as e:
+            print(f"     FEHLER beim Download der Python-Pakete: {e.stderr.decode('utf-8')}")
+            
     def run(self):
         print("=== OfflineAI Enterprise Builder ===")
         self.payload_dir.mkdir(parents=True, exist_ok=True)
