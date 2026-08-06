@@ -15,3 +15,5 @@ class Kernel:
         self.context.logger.info("Loading Registry")
 
         self.context.logger.info("Kernel Ready")
+
+self.context.logger.info("Registry initialized")
