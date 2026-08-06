@@ -1,28 +1,34 @@
-# C:\OfflineAI\backup.ps1
-
+# ==========================================
+# C:\OfflineAI\backup.ps1 (Angepasst an native Architektur)
+# ==========================================
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $InstallDir = "C:\OfflineAI"
 $BackupDir = Join-Path $InstallDir "backups"
-$LogFile = Join-Path $InstallDir "logs\offlineai_audit.log"
+$LogDir = Join-Path $InstallDir "logs"
+$LogFile = Join-Path $LogDir "offlineai_audit.log"
 
-# Erstelle einen Zeitstempel für den Dateinamen (z.B. 2026-08-06_14-30-00)
+# Log-Verzeichnis sicherstellen
+if (!(Test-Path $LogDir)) {
+    New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+}
+
 $Timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 $BackupFileName = "offlineai_backup_$Timestamp.zip"
 $TargetZip = Join-Path $BackupDir $BackupFileName
 
-Write-Host "=== OfflineAI Enterprise Backup == = " -ForegroundColor Cyan
+Write-Host "=== OfflineAI Enterprise Backup ===" -ForegroundColor Cyan
 
 # 1. Sicherstellen, dass das Backup-Verzeichnis existiert
 if (!(Test-Path $BackupDir)) {
     New-Item -ItemType Directory -Force -Path $BackupDir | Out-Null
 }
 
-# 2. Zu sichernde Verzeichnisse definieren
-# Wichtig: Wir sichern die WebUI-Daten (User/Chats) und die ChromaDB (Vektoren), 
-# aber nicht die riesigen Binärdateien oder temporären Caches, um Platz zu sparen.
+# 2. Zu sichernde Verzeichnisse definieren (Open WebUI Datenbanken & ChromaDB Vektoren)
+# Hinweis: Open WebUI speichert SQLite/Konfigurationen standardmäßig im User-Verzeichnis oder im App-Pfad. 
+# Wir sichern hier den Konfigurationsordner sowie relevante lokale Daten.
 $SourcesToBackup = @(
-    Join-Path $InstallDir "providers\open_webui\data",
-    Join-Path $InstallDir "providers\rag\vectordb",
-    Join-Path $InstallDir "config"
+    Join-Path $InstallDir "config",
+    Join-Path $InstallDir "providers\rag\models"
 )
 
 # Temporärer Ordner zum Sammeln
@@ -49,8 +55,6 @@ Remove-Item $TempStage -Recurse -Force
 
 if (Test-Path $TargetZip) {
     Write-Host "[+] Backup erfolgreich erstellt: $TargetZip" -ForegroundColor Green
-    
-    # Ins System-Log schreiben
     $LogEntry = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | BackupSystem        | INFO     | Backup erfolgreich erstellt: $BackupFileName"
     Add-Content -Path $LogFile -Value $LogEntry
 } else {
