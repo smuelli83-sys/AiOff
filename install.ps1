@@ -62,3 +62,17 @@ Start-Service -Name $ServiceName
 
 Write-Host "=== Installation/Update erfolgreich abgeschlossen! ===" -ForegroundColor Green
 Write-Host "Der OfflineAI Kernel läuft nun als Hintergrunddienst."
+
+Write-Host "[*] Registriere alle LLMs in der lokalen Ollama-Engine..." -ForegroundColor Cyan
+$OllamaExe = "C:\OfflineAI\providers\ollama\ollama.exe"
+
+# Kurze Pause, damit Ollama sicher bereit ist
+Start-Sleep -Seconds 5
+
+& $OllamaExe create qwen-fast -f "C:\OfflineAI\providers\ollama\Modelfile_QwenFast"
+& $OllamaExe create qwen3.6-27b -f "C:\OfflineAI\providers\ollama\Modelfile_Qwen27"
+& $OllamaExe create qwen3.6-35b -f "C:\OfflineAI\providers\ollama\Modelfile_Qwen35"
+& $OllamaExe create deepseek-coder -f "C:\OfflineAI\providers\ollama\Modelfile_DeepSeek"
+& $OllamaExe create llama3 -f "C:\OfflineAI\providers\ollama\Modelfile_Llama3"
+
+Write-Host "[+] Alle Modelle erfolgreich im System registriert!" -ForegroundColor Green
