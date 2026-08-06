@@ -26,4 +26,8 @@ providers:
       bind_dn: "CN=OfflineAI_Service,OU=ServiceAccounts,DC=domain,DC=local"
       bind_password: "sicheres_passwort" # Im produktiven System idealerweise verschlüsselt
       user_search_base: "OU=Users,DC=domain,DC=local"
-
+  
+  rag:
+    enabled: true
+    host: "127.0.0.1"
+    port: 8000
